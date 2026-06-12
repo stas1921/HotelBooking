@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: stasn
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: name, type: varchar(255), constraints: { unique: true } }
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: email, type: varchar(255), constraints: { unique: true, nullable: false } }
+              - column: { name: password, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: full_name, type: varchar(255) }
+              - column: { name: role_id, type: bigint }
+        - createTable:
+            tableName: hotels
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true } }
+              - column: { name: name, type: varchar(255) }
+              - column: { name: city, type: varchar(255) }
+              - column: { name: address, type: varchar(255) }
+              - column: { name: description, type: text }
+              - column: { name: stars, type: int }
+  - changeSet:
+      id: 2
+      author: stasn
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: fk_users_role
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: name, value: "ADMIN" }
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: name, value: "HOTEL_MANAGER" }
+        - insert:
+            tableName: roles
+            columns:
+              - column: { name: name, value: "TOURIST" }

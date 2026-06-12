@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Отели</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; background: #f0f2f5; margin: 0; }
+        .header { background: #667eea; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .hotel-card { background: white; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; display: flex; }
+        .hotel-image { width: 250px; height: 180px; object-fit: cover; }
+        .hotel-info { flex: 1; padding: 20px; }
+        .hotel-name { font-size: 24px; font-weight: bold; color: #333; }
+        .hotel-city { margin: 10px 0; }
+        .hotel-city a { color: #667eea; text-decoration: none; }
+        .hotel-city a:hover { text-decoration: underline; }
+        .hotel-stars { color: #ffc107; margin: 10px 0; }
+        .rooms-section { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .room-type { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .room-name { font-weight: bold; color: #333; }
+        .room-price { color: #28a745; font-weight: bold; }
+        .room-capacity { color: #666; font-size: 14px; }
+        .book-btn { background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
+        .book-btn:hover { background: #218838; }
+        .user-links { text-align: right; padding: 10px; background: white; border-bottom: 1px solid #ddd; }
+        .user-links a { margin-left: 15px; color: #667eea; text-decoration: none; }
+        .user-info { text-align: right; padding: 10px; background: white; border-bottom: 1px solid #ddd; }
+        .user-info span { margin-right: 15px; color: #333; }
+        .logout-btn { background: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; }
+        @media (max-width: 768px) {
+            .hotel-card { flex-direction: column; }
+            .hotel-image { width: 100%; height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="authPanel"></div>
+    <div class="header">
+        <h1>🏨 HotelBooking</h1>
+        <p>Лучшие отели России</p>
+    </div>
+    <div class="container" id="hotels-list">
+        Загрузка...
+    </div>
+
+    <script>
+        let currentUser = localStorage.getItem('currentUser');
+        let hotelsData = [];
+        
+        function updateAuthPanel() {
+            const panel = document.getElementById('authPanel');
+            if (currentUser) {
+                panel.innerHTML = `
+                    <div class="user-info">
+                        <span>👤 ${currentUser}</span>
+                        <a href="#" onclick="logout()" class="logout-btn">Выход</a>
+                    </div>
+                `;
+            } else {
+                panel.innerHTML = `
+                    <div class="user-links">
+                        <a href="/login-page">Вход</a>
+                        <a href="/register">Регистрация</a>
+                    </div>
+                `;
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            updateAuthPanel();
+            loadHotels();
+        }
+        
+        async function loadHotels() {
+            try {
+                const response = await fetch('/api/hotels');
+                hotelsData = await response.json();
+                displayHotels();
+            } catch(e) {
+                document.getElementById('hotels-list').innerHTML = '<p>Ошибка загрузки отелей</p>';
+            }
+        }
+        
+        function getRoomTypes(hotelId) {
+            const roomsByHotel = {
+                1: [
+                    { name: "Эконом", price: 5000, capacity: 2, desc: "Стандартный номер с базовыми удобствами" },
+                    { name: "Комфорт", price: 8000, capacity: 2, desc: "Улучшенный номер с дополнительными услугами" },
+                    { name: "Люкс", price: 15000, capacity: 3, desc: "Просторный номер с гостиной зоной" },
+                    { name: "Президентский", price: 35000, capacity: 5, desc: "Роскошный номер с панорамным видом" }
+                ],
+                2: [
+                    { name: "Эконом", price: 4500, capacity: 2, desc: "Уютный номер с видом на город" },
+                    { name: "Стандарт", price: 7000, capacity: 2, desc: "Комфортный номер со всеми удобствами" },
+                    { name: "Люкс", price: 12000, capacity: 3, desc: "Номер повышенной комфортности" },
+                    { name: "Президентский", price: 30000, capacity: 4, desc: "Эксклюзивный номер с личным обслуживанием" }
+                ],
+                3: [
+                    { name: "Эконом", price: 4000, capacity: 2, desc: "Бюджетный вариант для отдыха" },
+                    { name: "Комфорт", price: 6500, capacity: 2, desc: "Номер с улучшенной планировкой" },
+                    { name: "Люкс", price: 10000, capacity: 3, desc: "Просторный номер с видом на море" },
+                    { name: "Президентский", price: 25000, capacity: 4, desc: "VIP номер с отдельной террасой" }
+                ]
+            };
+            
+            if (!roomsByHotel[hotelId]) {
+                return [
+                    { name: "Эконом", price: 5000, capacity: 2, desc: "Стандартный номер" },
+                    { name: "Люкс", price: 15000, capacity: 3, desc: "Улучшенный номер" },
+                    { name: "Президентский", price: 30000, capacity: 4, desc: "VIP номер" }
+                ];
+            }
+            return roomsByHotel[hotelId];
+        }
+        
+        function getYandexMapsLink(address, city) {
+            const query = encodeURIComponent(`${city}, ${address}`);
+            return `https://yandex.ru/maps/?text=${query}`;
+        }
+        
+        function displayHotels() {
+            const container = document.getElementById('hotels-list');
+            if (!hotelsData || hotelsData.length === 0) {
+                container.innerHTML = '<p>Нет отелей. Добавьте через SQL.</p>';
+                return;
+            }
+            
+            let html = '';
+            hotelsData.forEach(hotel => {
+                const rooms = getRoomTypes(hotel.id);
+                const mapsLink = getYandexMapsLink(hotel.address || 'центр', hotel.city);
+                const imageUrl = hotel.imageUrl || 'https://via.placeholder.com/250x180?text=Hotel';
+                
+                html += `
+                    <div class="hotel-card">
+                        <img class="hotel-image" src="${imageUrl}" alt="${hotel.name}" onerror="this.src='https://via.placeholder.com/250x180?text=Hotel'">
+                        <div class="hotel-info">
+                            <div class="hotel-name">${hotel.name}</div>
+                            <div class="hotel-city">
+                                📍 <a href="${mapsLink}" target="_blank">${hotel.city}, ${hotel.address || 'в центре города'}</a>
+                                <span style="margin-left: 10px;">🔗 <a href="${mapsLink}" target="_blank" style="color:#667eea;">открыть на карте</a></span>
+                            </div>
+                            <div class="hotel-stars">${'⭐'.repeat(hotel.stars || 3)}</div>
+                            <p>${hotel.description || 'Комфортабельный отель с отличным сервисом'}</p>
+                            
+                            <div class="rooms-section">
+                                <strong>🏠 Доступные категории номеров:</strong>
+                                <div class="room-selector" style="margin-top: 10px;">
+                                    ${rooms.map(room => `
+                                        <div class="room-type">
+                                            <div>
+                                                <span class="room-name">${room.name}</span>
+                                                <span class="room-capacity"> (👥 до ${room.capacity} чел)</span>
+                                                <div style="font-size: 12px; color: #666;">${room.desc}</div>
+                                            </div>
+                                            <div>
+                                                <span class="room-price">${room.price.toLocaleString()} ₽ / ночь</span>
+                                                ${currentUser ? 
+                                                    `<button class="book-btn" onclick="bookRoom(${hotel.id}, '${hotel.name}', '${room.name}', ${room.price}, ${room.capacity})">Забронировать</button>` :
+                                                    `<button class="book-btn" onclick="alert('Для бронирования нужно войти в систему')">Войдите для брони</button>`
+                                                }
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        function bookRoom(hotelId, hotelName, roomType, price, capacity) {
+            const checkIn = prompt('📅 Введите дату заезда (ГГГГ-ММ-ДД):', '2024-12-01');
+            if (!checkIn) return;
+            const checkOut = prompt('📅 Введите дату выезда (ГГГГ-ММ-ДД):', '2024-12-05');
+            if (!checkOut) return;
+            
+            const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+            const totalPrice = price * nights;
+            
+            const confirmMsg = `Подтверждение бронирования:\n\n` +
+                `Отель: ${hotelName}\n` +
+                `Категория: ${roomType}\n` +
+                `Даты: ${checkIn} - ${checkOut}\n` +
+                `Количество ночей: ${nights}\n` +
+                `Цена за ночь: ${price.toLocaleString()} ₽\n` +
+                `Итого: ${totalPrice.toLocaleString()} ₽\n\n` +
+                `Подтверждаете бронирование?`;
+            
+            if (confirm(confirmMsg)) {
+                fetch('/api/bookings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        checkInDate: checkIn,
+                        checkOutDate: checkOut,
+                        guestCount: capacity,
+                        status: 'CONFIRMED'
+                    })
+                })
+                .then(res => res.json())
+                .then(() => {
+                    alert(`✅ Отель "${hotelName}" (${roomType}) успешно забронирован!\nИтого: ${totalPrice.toLocaleString()} ₽`);
+                })
+                .catch(() => {
+                    alert('❌ Ошибка бронирования. Попробуйте позже.');
+                });
+            }
+        }
+        
+        updateAuthPanel();
+        loadHotels();
+    </script>
+</body>
+</html>

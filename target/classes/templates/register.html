@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; background: #667eea; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 40px; border-radius: 20px; width: 350px; }
+        h2 { text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        a { color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Регистрация</h2>
+        <form method="post" action="/register">
+            <input type="text" name="fullName" placeholder="ФИО" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/login-page">Уже есть аккаунт? Войти</a>
+        </div>
+    </div>
+</body>
+</html>
